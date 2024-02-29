@@ -344,8 +344,8 @@ class Widow250Env(gym.Env, Serializable):
             obs_bound = 100
             obs_high = np.ones(robot_state_dim) * obs_bound
             state_space = gym.spaces.Box(-obs_high, obs_high)
-            object_position = gym.spaces.Box(-1, 1)
-            object_orientation = gym.spaces.Box(-1, 1)
+            object_position = gym.spaces.Box(-np.ones(3), np.ones(3))
+            object_orientation = gym.spaces.Box(-np.ones(4), np.ones(4))
             spaces = {'image': img_space, 'state': state_space, 'object_position': object_position,
                       'object_orientation': object_orientation}
             self.observation_space = gym.spaces.Dict(spaces)
