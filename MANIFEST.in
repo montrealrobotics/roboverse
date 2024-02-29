@@ -1,0 +1,3 @@
+
+recursive-include roboverse/assets/bullet-objects *
+recursive-include roboverse/assets/interbotix_descriptions *
