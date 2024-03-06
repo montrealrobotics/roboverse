@@ -1,5 +1,6 @@
 import pybullet as p
 import numpy as np
+import random
 
 
 def get_joint_states(body_id, joint_indices):
@@ -137,3 +138,28 @@ def deg_to_rad(deg):
 
 def rad_to_deg(rad):
     return np.array([r * 180. / np.pi for r in rad])
+
+
+def get_random_workspace_pose(min_pose, max_pose, min_r):
+    """Get pose of a random point in the robot workspace.
+
+    Returns:
+        np.array: [x,y,z] pose.
+
+    """
+    singularity_area = True
+    x = y = z = 0
+
+    # check if generated x,y,z are in singularity area
+    while singularity_area:
+
+        x = round(random.uniform(min_pose[0], max_pose[0]), 1)
+        y = round(random.uniform(min_pose[1], max_pose[1]), 1)
+        z = round(random.uniform(min_pose[2], max_pose[2]), 1)
+
+        if (x ** 2 + y ** 2) > min_r ** 2:
+            singularity_area = False
+
+    pose = [x, y, z]
+
+    return pose

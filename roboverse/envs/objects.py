@@ -31,11 +31,15 @@ def tray(base_position=(.60, 0.3, -.37), scale=0.5):
     return tray_id
 
 
-def widow250():
+def widow250(base_position=None):
+    if base_position:
+        position = base_position
+    else:
+        position = [0.6, 0, -0.4]
     widow250_path = os.path.join(ASSET_PATH,
                                  'interbotix_descriptions/urdf/wx250s.urdf')
     widow250_id = p.loadURDF(widow250_path,
-                             basePosition=[0.6, 0, -0.4],
+                             basePosition=position,
                              baseOrientation=bullet.deg_to_quat([0., 0., 0])
                              )
     return widow250_id
