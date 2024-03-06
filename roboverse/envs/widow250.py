@@ -61,6 +61,7 @@ class Widow250Env(gym.Env, Serializable):
         self.base_position = [0.6, 0, -0.4]
 
         self.gui = gui
+        self.done = False
 
         # TODO(avi): This hard-coding should be removed
         self.fc_input_key = 'state'
@@ -254,7 +255,7 @@ class Widow250Env(gym.Env, Serializable):
 
         info = self.get_info()
         reward = self.get_reward(info)
-        done = False
+        done = self.done
         truncated = False
         return self.get_observation(), reward, done, truncated, info
 

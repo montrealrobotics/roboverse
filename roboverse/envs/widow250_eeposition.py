@@ -37,7 +37,6 @@ class Widow250EEPositionEnv(Widow250Env):
         return info
 
     def get_reward(self, info):
-        done = False
         if self.reward_type == 'ee_position':
             reward = 0
             # Reward weight for reaching the goal position
@@ -50,11 +49,11 @@ class Widow250EEPositionEnv(Widow250Env):
 
             if info['ee_pose_success']:
                 reward = g_w * 1
-                done = True
+                self.done = True
         else:
             raise NotImplementedError
 
-        return reward, done
+        return reward
 
     def reset(self, target=None, seed=None, options=None):
         if target:
