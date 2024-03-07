@@ -75,7 +75,8 @@ class Widow250EEPositionEnv(Widow250Env):
             self.reset_joint_indices,
             self.reset_joint_values)
         self.is_gripper_open = True  # TODO(avi): Clean this up
-
+        self.done = False
+        
         return self.get_observation(), self.get_info()
 
     def _get_target_pose(self) -> np.ndarray:
