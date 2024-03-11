@@ -29,47 +29,18 @@ ACTION_DIM = 8
 
 class Widow250Env(gym.Env, Serializable):
 
-    def __init__(self,
-                 control_mode='continuous',
-                 observation_mode='pixels',
-                 observation_img_dim=48,
-                 transpose_image=True,
+    def __init__(self, control_mode='continuous', observation_mode='pixels', observation_img_dim=48,
+                 transpose_image=True, object_names=('beer_bottle', 'gatorade'), object_scales=(0.75, 0.75),
+                 object_orientations=((0, 0, 1, 0), (0, 0, 1, 0)), object_position_high=(.7, .27, -.30),
+                 object_position_low=(.5, .18, -.30), target_object='gatorade', load_tray=True, num_sim_steps=10,
+                 num_sim_steps_reset=50, num_sim_steps_discrete_action=75, reward_type='grasping',
+                 grasp_success_height_threshold=-0.25, grasp_success_object_gripper_threshold=0.1,
+                 use_neutral_action=False, neutral_gripper_open=True, xyz_action_scale=0.2, abc_action_scale=20.0,
+                 gripper_action_scale=20.0, ee_pos_high=(0.8, .4, -0.1), ee_pos_low=(.4, -.2, -.34),
+                 camera_target_pos=(0.6, 0.2, -0.28), camera_distance=0.29, camera_roll=0.0, camera_pitch=-40,
+                 camera_yaw=180, gui=False, in_vr_replay=False):
 
-                 object_names=('beer_bottle', 'gatorade'),
-                 object_scales=(0.75, 0.75),
-                 object_orientations=((0, 0, 1, 0), (0, 0, 1, 0)),
-                 object_position_high=(.7, .27, -.30),
-                 object_position_low=(.5, .18, -.30),
-                 target_object='gatorade',
-                 load_tray=True,
-
-                 num_sim_steps=10,
-                 num_sim_steps_reset=50,
-                 num_sim_steps_discrete_action=75,
-
-                 reward_type='grasping',
-                 grasp_success_height_threshold=-0.25,
-                 grasp_success_object_gripper_threshold=0.1,
-
-                 use_neutral_action=False,
-                 neutral_gripper_open=True,
-
-                 xyz_action_scale=0.2,
-                 abc_action_scale=20.0,
-                 gripper_action_scale=20.0,
-
-                 ee_pos_high=(0.8, .4, -0.1),
-                 ee_pos_low=(.4, -.2, -.34),
-                 camera_target_pos=(0.6, 0.2, -0.28),
-                 camera_distance=0.29,
-                 camera_roll=0.0,
-                 camera_pitch=-40,
-                 camera_yaw=180,
-
-                 gui=False,
-                 in_vr_replay=False,
-                 ):
-
+        super().__init__()
         self.control_mode = control_mode
         self.observation_mode = observation_mode
         self.observation_img_dim = observation_img_dim
@@ -87,7 +58,10 @@ class Widow250Env(gym.Env, Serializable):
         self.use_neutral_action = use_neutral_action
         self.neutral_gripper_open = neutral_gripper_open
 
+        self.base_position = [0.6, 0, -0.4]
+
         self.gui = gui
+        self.done = False
 
         # TODO(avi): This hard-coding should be removed
         self.fc_input_key = 'state'
@@ -154,7 +128,7 @@ class Widow250Env(gym.Env, Serializable):
         self.ee_pos_init, self.ee_quat_init = bullet.get_link_state(
             self.robot_id, self.end_effector_index)
 
-    def _load_meshes(self):
+    def _load_meshes(self, target_position=None):
         self.table_id = objects.table()
         self.robot_id = objects.widow250()
 
@@ -172,11 +146,18 @@ class Widow250Env(gym.Env, Serializable):
             self.original_object_positions = object_positions
         for object_name, object_position in zip(self.object_names,
                                                 object_positions):
-            self.objects[object_name] = object_utils.load_object(
-                object_name,
-                object_position,
-                object_quat=self.object_orientations[object_name],
-                scale=self.object_scales[object_name])
+            if object_name == self.target_object and self.reward_type == 'ee_position':
+                if target_position:
+                    object_position = target_position
+                else:
+                    object_position = [0, 0, 0]
+                self.objects[object_name] = object_utils.create_debug_sphere(object_position)
+            else:
+                self.objects[object_name] = object_utils.load_object(
+                    object_name,
+                    object_position,
+                    object_quat=self.object_orientations[object_name],
+                    scale=self.object_scales[object_name])
             bullet.step_simulation(self.num_sim_steps_reset)
 
     def reset(self, target=None, seed=None, options=None):
@@ -239,6 +220,9 @@ class Widow250Env(gym.Env, Serializable):
                 else:
                     target_gripper_state = GRIPPER_CLOSED_STATE
                 # target_gripper_state = gripper_state
+        elif self.control_mode == 'no_gripper':
+            num_sim_steps = self.num_sim_steps
+            target_gripper_state = GRIPPER_OPEN_STATE
         else:
             raise NotImplementedError
 
@@ -271,7 +255,7 @@ class Widow250Env(gym.Env, Serializable):
 
         info = self.get_info()
         reward = self.get_reward(info)
-        done = False
+        done = self.done
         truncated = False
         return self.get_observation(), reward, done, truncated, info
 
@@ -375,7 +359,7 @@ if __name__ == "__main__":
 
     for i in range(20):
         print(i)
-        obs, rew, done, info = env.step(
+        obs, rew, done, _, info = env.step(
             np.asarray([-0.05, 0., 0., 0., 0., 0.5, 0.]))
         print("reward", rew, "info", info)
         time.sleep(0.1)

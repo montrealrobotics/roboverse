@@ -5,6 +5,18 @@ from roboverse.assets.shapenet_object_lists \
 
 ENVIRONMENT_SPECS = (
     {
+        'id': 'Widow250EEPosition-v0',
+        'entry_point': 'roboverse.envs.widow250_eeposition:Widow250EEPositionEnv',
+        'kwargs': {'reward_type': 'ee_position',
+                   'control_mode': 'no_gripper',
+                   'target_object': 'sphere',
+                   'object_names': ('sphere',),
+                   'object_scales': (0.7,),
+                   'load_tray': False,
+                   'xyz_action_scale': 0.2,
+                   }
+    },
+    {
         'id': 'Widow250Grasp-v0',
         'entry_point': 'roboverse.envs.widow250:Widow250Env',
         'kwargs': {'reward_type': 'grasping',

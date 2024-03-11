@@ -206,6 +206,12 @@ def load_bullet_object(object_name, **kwargs):
     return object_id
 
 
+def create_debug_sphere(position):
+    target_visual_shape = p.createVisualShape(p.GEOM_SPHERE, radius=0.015)
+    sphere_id = p.createMultiBody(baseVisualShapeIndex=target_visual_shape,
+                                  basePosition=position)
+    return sphere_id
+
 # TODO(avi) Maybe move this to a different file
 BULLET_OBJECT_SPECS = dict(
     duck=dict(
@@ -250,6 +256,13 @@ BULLET_OBJECT_SPECS = dict(
     cube=dict(
         fileName=os.path.join(
             BASE_ASSET_PATH, 'cube/cube.urdf'),
+        basePosition=(.7, 0.2, -.35),
+        baseOrientation=(0, 0, 0.707107, 0.707107),
+        globalScaling=0.05,
+    ),
+    sphere=dict(
+        fileName=os.path.join(
+            BASE_ASSET_PATH, 'sphere/sphere_small.urdf'),
         basePosition=(.7, 0.2, -.35),
         baseOrientation=(0, 0, 0.707107, 0.707107),
         globalScaling=0.05,
