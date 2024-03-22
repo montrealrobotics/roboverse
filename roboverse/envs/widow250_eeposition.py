@@ -58,14 +58,15 @@ class Widow250EEPositionEnv(Widow250Env):
     def reset(self, target=None, seed=None, options=None):
         if target:
             assert len(target) == 6
+            self.ee_target_pose = target
         else:
             self.ee_target_pose = self._get_target_pose()
 
-            self.objects[self.target_object] = object_utils.load_object(
-                self.target_object,
-                self.ee_target_pose,
-                object_quat=self.object_orientations[self.target_object],
-                scale=self.object_scales[self.target_object])
+        self.objects[self.target_object] = object_utils.load_object(
+            self.target_object,
+            self.ee_target_pose,
+            object_quat=self.object_orientations[self.target_object],
+            scale=self.object_scales[self.target_object])
 
         bullet.reset()
         bullet.setup_headless()
