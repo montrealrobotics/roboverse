@@ -277,7 +277,12 @@ class Widow250Env(gym.Env, Serializable):
                 'image': image_observation
             }
         else:
-            raise NotImplementedError
+            observation = {
+                'object_position': object_position,
+                'object_orientation': object_orientation,
+                'state': np.concatenate(
+                    (ee_pos, ee_quat, gripper_state, gripper_binary_state)),
+            }
 
         return observation
 
@@ -334,7 +339,15 @@ class Widow250Env(gym.Env, Serializable):
                       'object_orientation': object_orientation}
             self.observation_space = gym.spaces.Dict(spaces)
         else:
-            raise NotImplementedError
+            robot_state_dim = 10  # XYZ + QUAT + GRIPPER_STATE
+            obs_bound = 100
+            obs_high = np.ones(robot_state_dim) * obs_bound
+            state_space = gym.spaces.Box(-obs_high, obs_high)
+            object_position = gym.spaces.Box(-np.ones(3), np.ones(3))
+            object_orientation = gym.spaces.Box(-np.ones(4), np.ones(4))
+            spaces = {'state': state_space, 'object_position': object_position,
+                      'object_orientation': object_orientation}
+            self.observation_space = gym.spaces.Dict(spaces)
 
     def get_gripper_state(self):
         joint_states, _ = bullet.get_joint_states(self.robot_id,
