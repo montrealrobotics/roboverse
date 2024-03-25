@@ -29,7 +29,7 @@ ACTION_DIM = 8
 
 class Widow250Env(gym.Env, Serializable):
 
-    def __init__(self, control_mode='continuous', observation_mode='pixels', observation_img_dim=48,
+    def __init__(self, control_mode='continuous', observation_mode='state', observation_img_dim=48,
                  transpose_image=True, object_names=('beer_bottle', 'gatorade'), object_scales=(0.75, 0.75),
                  object_orientations=((0, 0, 1, 0), (0, 0, 1, 0)), object_position_high=(.7, .27, -.30),
                  object_position_low=(.5, .18, -.30), target_object='gatorade', load_tray=True, num_sim_steps=10,
@@ -276,6 +276,13 @@ class Widow250Env(gym.Env, Serializable):
                     (ee_pos, ee_quat, gripper_state, gripper_binary_state)),
                 'image': image_observation
             }
+        elif self.observation_mode == 'state':
+            observation = {
+                'object_position': object_position,
+                'object_orientation': object_orientation,
+                'state': np.concatenate(
+                    (ee_pos, ee_quat, gripper_state, gripper_binary_state)),
+            }
         else:
             observation = {
                 'object_position': object_position,
@@ -338,6 +345,17 @@ class Widow250Env(gym.Env, Serializable):
             spaces = {'image': img_space, 'state': state_space, 'object_position': object_position,
                       'object_orientation': object_orientation}
             self.observation_space = gym.spaces.Dict(spaces)
+        elif self.observation_mode == 'state':
+            robot_state_dim = 10  # XYZ + QUAT + GRIPPER_STATE
+            obs_bound = 100
+            obs_high = np.ones(robot_state_dim) * obs_bound
+            state_space = gym.spaces.Box(-obs_high, obs_high)
+            object_position = gym.spaces.Box(-np.ones(3), np.ones(3))
+            object_orientation = gym.spaces.Box(-np.ones(4), np.ones(4))
+            spaces = {'state': state_space, 'object_position': object_position,
+                      'object_orientation': object_orientation}
+            self.observation_space = gym.spaces.Dict(spaces)
+
         else:
             robot_state_dim = 10  # XYZ + QUAT + GRIPPER_STATE
             obs_bound = 100
