@@ -17,6 +17,21 @@ ENVIRONMENT_SPECS = (
                    }
     },
     {
+        'id': 'Widow250EnvRosASim-v0',
+        'entry_point': 'roboverse.envs.widow250_real:Widow250EnvRosASim',
+        'kwargs': {'reward_type': 'ee_position',
+                   'observation_mode': 'state'
+                   }
+    },
+    {
+        'id': 'Widow250EnvROSARob-v0',
+        'entry_point': 'roboverse.envs.widow250_real:Widow250EnvROSARob',
+        'kwargs': {'reward_type': 'ee_position',
+                   'rs_address': '192.168.1.101:50051',
+                   'observation_mode': 'state'
+                   }
+    },
+    {
         'id': 'Widow250Grasp-v0',
         'entry_point': 'roboverse.envs.widow250:Widow250Env',
         'kwargs': {'reward_type': 'grasping',

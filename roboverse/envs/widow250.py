@@ -390,8 +390,7 @@ if __name__ == "__main__":
 
     for i in range(20):
         print(i)
-        obs, rew, done, _, info = env.step(
-            np.asarray([-0.05, 0., 0., 0., 0., 0.5, 0.]))
+        obs, rew, done, _, info = env.step(np.asarray([-0.05, 0., 0., 0., 0., 0.5, 0., 0.]))
         print("reward", rew, "info", info)
         time.sleep(0.1)
 
