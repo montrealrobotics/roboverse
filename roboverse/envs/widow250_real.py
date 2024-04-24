@@ -35,7 +35,7 @@ class Widow250EnvROS(gym.Env):
     real_robot = False
 
     def __init__(self, observation_mode='state', observation_img_dim=48,
-                 reward_type='ee_position', xyz_action_scale=0.2,
+                 reward_type='ee_position', xyz_action_scale=0.2, abc_action_scale=20.0,
                  ee_pos_low=(0, -0.3, 0.06), ee_pos_high=(0.6, 0.3, 0.50), gui=False, rs_address=None,
                  ee_distance_threshold=0.1, robot_model='wx250s'):
 
@@ -57,6 +57,7 @@ class Widow250EnvROS(gym.Env):
         self.reset_joint_indices = RESET_JOINT_INDICES
 
         self.xyz_action_scale = xyz_action_scale
+        self.abc_action_scale = abc_action_scale
 
         self._set_action_space()
         self._set_observation_space()
@@ -68,8 +69,11 @@ class Widow250EnvROS(gym.Env):
         self.arm_min_radius = 0.100
         self.ee_target_pose = None
         self.ee_pos = np.array([0, 0, 0])
+        self.ee_orientation = np.array([0, 0, 0])
         self.ee_quat = np.array([0, 0, 0, 1])
         self.previous_position = None
+        self.previous_orientation = None
+
         if rs_address:
             self.client = rs_client.Client(rs_address)
         self.robogym = bullet.RoboGymUtils(robot_model, client=self.client)
@@ -116,20 +120,24 @@ class Widow250EnvROS(gym.Env):
         # ee pose from robot
         if self.previous_position is not None:
             prev_position = self.previous_position
+            prev_orientation = self.previous_orientation
         else:
             prev_position = self.ee_pos
+            prev_orientation = self.ee_orientation
 
         scale_move = self.xyz_action_scale * xyz_action
+        scale_rotation = self.abc_action_scale * orientation_action
+        target_ee_orientation = prev_orientation + scale_rotation
+
         target_ee_position = prev_position + scale_move
         target_ee_pos_clipped = np.clip(target_ee_position, self.ee_pos_low,
                                         self.ee_pos_high)
         self.previous_position = target_ee_pos_clipped
-        target_ee_pose = np.append(target_ee_pos_clipped, orientation_action)
+        self.previous_orientation = target_ee_orientation
+
+        target_ee_pose = np.append(target_ee_pos_clipped, target_ee_orientation)
 
         target_joints, solution_found = self.robogym.interbotix_utils.inverse_kinematics(target_ee_pose, custom_guess=self.robogym.joint_positions)
-
-        check_inv_kin = self.robogym.interbotix_utils.forward_kinematics(target_joints)
-        check_again = self.robogym.interbotix_utils.forward_kinematics(self.robogym.joint_positions)
 
         if solution_found:
             # Send action to Robot Server and get state
@@ -157,8 +165,8 @@ class Widow250EnvROS(gym.Env):
         self.robogym.check_rs_state_keys(rs_state, self.ee_target_pose)
 
         # Convert the initial state from Robot Server format to environment format
-        self.ee_pos, ee_rot = self.robogym.robot_server_state_to_env_state(rs_state)
-        self.ee_quat = bullet.deg_to_quat(ee_rot)
+        self.ee_pos, self.ee_orientation = self.robogym.robot_server_state_to_env_state(rs_state)
+        self.ee_quat = bullet.deg_to_quat(self.ee_orientation)
 
         object_position = np.array(self.ee_target_pose)
         object_orientation = np.array([0, 0, 0, 1])
